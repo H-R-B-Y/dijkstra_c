@@ -10,50 +10,79 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-# include "dijkstra.h"
+#include "dijkstra.h"
 
-static inline int clamp_int(int x, int min, int max)
+static inline int	clamp_int(int x, int min, int max)
 {
-	return (x * (x >= min && x < max) + min * (x < min) + max * (x >= max));
+	return (x * (x >= min && x < max)
+		+ min * (x < min)
+		+ max * (x >= max)
+	);
 }
 
-void	dijkstra(t_cost_map cost_map, t_queue **queue, t_dj_map *map)
+static int	check_neighbors(t_cell *cell,
+	t_dj_map *map,
+	t_queue **queue,
+	int dir[2]
+)
 {
-	t_cell *cell;
-	t_cell *neighbour;
-	t_position neighbours[4];
-	int i;
+	t_cell	*neighbour;
 
-	neighbours[0] = (t_position){0, 1};
-	neighbours[1] = (t_position){1, 0};
-	neighbours[2] = (t_position){0, -1};
-	neighbours[3] = (t_position){-1, 0};
-	while ((cell = dj_dequeue(queue)))
+	if ((cell->pos.y == 0 && dir[0] == -1)
+		|| cell->pos.y + dir[0] >= map->height
+		|| (cell->pos.x == 0 && dir[1] == -1)
+		|| cell->pos.x + dir[1] >= map->width)
+		return (-1);
+	neighbour = &map->cost_map
+	[cell->pos.y + dir[0]]
+	[cell->pos.x + dir[1]];
+	if (!neighbour->visited && (++neighbour->visited)
+		&& map->is_valid(map, neighbour->pos))
+		dj_enqueue(queue, neighbour, cell->cost + 1);
+	if (neighbour->cost > cell->cost + 1)
+		neighbour->cost = cell->cost + 1;
+	if (map->has_end
+		&& neighbour->pos.y == map->end.y
+		&& neighbour->pos.x == map->end.x)
+		return (1);
+	return (0);
+}
+
+void	dijkstra(t_queue **queue, t_dj_map *map)
+{
+	t_cell	*cell;
+	int		dirs[4][2];
+
+	dirs[0][0] = 0;
+	dirs[0][1] = 1;
+	dirs[1][0] = 1;
+	dirs[1][1] = 0;
+	dirs[2][0] = 0;
+	dirs[2][1] = -1;
+	dirs[3][0] = -1;
+	dirs[3][1] = 0;
+	cell = dj_dequeue(queue);
+	while (cell)
 	{
-		i = 0;
-		while (i < 4)
-		{
-			neighbour = &cost_map[ \
-				clamp_int(cell->pos.y + neighbours[i].y, 0, map->height - 1) \
-				][clamp_int(cell->pos.x + neighbours[i].x, 0, map->width - 1)];
-			if (!neighbour->visited
-				&& (neighbour->visited += 1)
-				&&	map->is_valid(map, neighbour->pos))
-				dj_enqueue(queue, neighbour, cell->cost + 1);
-			i++;
-		}
+		if (check_neighbors(cell, map, queue, dirs[0]) == 1
+			||check_neighbors(cell, map, queue, dirs[1]) == 1
+			||check_neighbors(cell, map, queue, dirs[2]) == 1
+			||check_neighbors(cell, map, queue, dirs[3]) == 1)
+			return ;
+		cell = dj_dequeue(queue);
 	}
 }
 
-int		perform_dijkstra(t_dj_map *map)
+int	perform_dijkstra(t_dj_map *map)
 {
-	t_queue *queue;
+	t_queue	*queue;
 
 	if (!init_cost_map(map))
 		return (0);
 	queue = 0;
 	map->cost_map[map->start.y][map->start.x].visited = 1;
 	dj_enqueue(&queue, &map->cost_map[map->start.y][map->start.x], 0);
-	dijkstra(map->cost_map, &queue, map);
+	dijkstra(&queue, map);
+	ft_lstclear(&queue, free);
 	return (1);
 }

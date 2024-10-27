@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "dijkstra.h"
+#include "dijkstra_debug.h"
 
 #define RESET "\033[0m"
 #define RED "\033[31m"
@@ -21,15 +22,47 @@
 #define CYAN "\033[36m"
 #define WHITE "\033[37m"
 
-void debug_print_dijkstra( \
-	t_cost_map cost_map,
-	t_dj_map *map,
-	t_position highlight,
-	int	(*colour)(void *, t_position)
+static void	print_cost_char(t_dj_map *map, size_t i, size_t j)
+{
+	if (!map->is_valid(map, (t_dj_position){i, j}))
+		ft_putchar_fd('#', 1);
+	else if (map->cost_map[i][j].cost == -1)
+		ft_putchar_fd(' ', 1);
+	else
+		ft_putchar_fd((char)map->get_type(map, (t_dj_position){i, j}), 1);
+	ft_putchar_fd(' ', 1);
+}
+
+static void	print_colour_string(t_dj_map *map,
+	t_dj_position pos,
+	t_dj_position highlight,
+	int (*colour)(void *, t_dj_position)
 )
 {
-	size_t i;
-	size_t j;
+	if (pos.y == highlight.y && pos.x == highlight.x)
+		ft_putstr_fd(RED, 1);
+	else
+		ft_putstr_fd(
+			((char *[]){WHITE,
+				GREEN,
+				YELLOW,
+				BLUE,
+				MAGENTA,
+				CYAN,
+				RED}
+				)[colour(map, (t_dj_position){pos.y, pos.x})],
+			1
+			);
+}
+
+void	debug_print_dijkstra(
+	t_dj_map *map,
+	t_dj_position highlight,
+	int (*colour)(void *, t_dj_position)
+)
+{
+	size_t	i;
+	size_t	j;
 
 	i = 0;
 	while (i < map->height)
@@ -37,19 +70,9 @@ void debug_print_dijkstra( \
 		j = 0;
 		while (j < map->width)
 		{
-			if (i == highlight.y && j == highlight.x)
-				ft_putstr_fd(RED, 1);
-			else
-				ft_putstr_fd(((char *[]){WHITE, GREEN, YELLOW, BLUE, MAGENTA, CYAN, RED})[colour(map, (t_position){i,j})], 1);
-			if (!map->is_valid(map, (t_position){i,j}))
-				ft_putchar_fd('#', 1);
-			else if (cost_map[i][j].cost == -1)
-				ft_putchar_fd(' ', 1);
-			else if (cost_map[i][j].cost < 10)
-				ft_putchar_fd((char)(cost_map[i][j].cost + '0'), 1);
-			else
-				ft_putchar_fd((char)map->get_type(map, (t_position){i,j}), 1);
-			ft_putstr_fd(" ", 1);
+			print_colour_string(map, (t_dj_position){i, j},
+				highlight, colour);
+			print_cost_char(map, i, j);
 			ft_putstr_fd(RESET, 1);
 			j++;
 		}

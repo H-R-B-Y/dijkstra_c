@@ -12,13 +12,13 @@
 
 #include "dijkstra.h"
 
-int		init_cost_map(t_dj_map *map)
+int	init_cost_map(t_dj_map *map)
 {
-	t_position iter;
-	t_cost_map cost_map;
+	t_dj_position	iter;
+	t_cost_map		cost_map;
 
 	cost_map = malloc(map->height * sizeof(t_cell *));
-	iter = (t_position){0, 0};
+	iter = (t_dj_position){0, 0};
 	if (!cost_map)
 		return (0);
 	while (iter.y < map->height)
@@ -32,7 +32,7 @@ int		init_cost_map(t_dj_map *map)
 		iter.x = 0;
 		while (iter.x < map->width)
 		{
-			cost_map[iter.y][iter.x] = (t_cell){(t_position){iter.y, iter.x}, -1, 0};
+			cost_map[iter.y][iter.x] = (t_cell){{iter.y, iter.x}, -1, 0};
 			iter.x++;
 		}
 		iter.y++;
@@ -49,8 +49,8 @@ void	dj_enqueue(t_queue **queue, t_cell *cell, int cost)
 
 t_cell	*dj_dequeue(t_queue **queue)
 {
-	t_queue *node;
-	t_cell *cell;
+	t_queue	*node;
+	t_cell	*cell;
 
 	node = *queue;
 	if (!node)
@@ -61,9 +61,9 @@ t_cell	*dj_dequeue(t_queue **queue)
 	return (cell);
 }
 
-void dijkstra_clean_up(t_dj_map *map, t_queue *queue)
+void	dijkstra_clean_up(t_dj_map *map)
 {
-	size_t i;
+	size_t	i;
 
 	i = 0;
 	while (i < map->height)
@@ -72,5 +72,4 @@ void dijkstra_clean_up(t_dj_map *map, t_queue *queue)
 		i++;
 	}
 	free(map->cost_map);
-	ft_lstclear(&queue, &free);
 }
